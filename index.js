@@ -30,7 +30,19 @@ async function run() {
 
     const doctorsCollection = client.db('doctorDB').collection('doctors');
     const appionmentCollection = client.db('doctorDB').collection('appionment');
+    const usersCollection = client.db('doctorDB').collection('users');
 
+    // users relate api 
+    app.post('/users' , async(req, res)=>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result)
+    })
+
+    app.get('/totalDoctors' , async(req , res) =>{
+      const result = await doctorsCollection.estimatedDocumentCount();
+      res.send({totalDoctors: result})
+    })
 
     app.get('/doctors' , async(req , res) =>{
       const cursor = doctorsCollection.find()
@@ -50,6 +62,32 @@ async function run() {
       res.send(result)
 
     })
+
+
+    // Creating index on two fields
+    const indexKeys = { name: 1, treatment: 1 }; // Replace field1 and field2 with your actual field names
+    const indexOptions = { name: "nameTreatment" }; // Replace index_name with the desired index name
+    const result = await appionmentCollection.createIndex(indexKeys, indexOptions);
+    console.log(result);
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+
+
+
+app.get("/getJobsByText/:text", async (req, res) => {
+      const text = req.params.text;
+      const result = await appionmentCollection
+        .find({
+          $or: [
+            { name: { $regex: text, $options: "i" } },
+            { treatment: { $regex: text, $options: "i" } },
+          ],
+        })
+        .toArray();
+      res.send(result);
+    });
+
 
     // Appionment 
 
@@ -74,6 +112,13 @@ async function run() {
       res.send(result);
     })
 
+    app.delete('appionment/:id', async(req, res) =>{
+      const id = req.params.id;
+      console.log(id)
+      // const query = {_id: new ObjectId(id)};
+      // const result = await appionmentCollection.deleteOne(query)
+      // res.send(result)
+    })
 
 
 
